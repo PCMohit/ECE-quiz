@@ -90,42 +90,68 @@ function startAttempt_(r){
 }
 
 function submitAttempt_(r){
-  if(!r.attemptToken||!Array.isArray(r.answers))throw new Error('Invalid submission.');
+  if(!r.attemptToken)throw new Error('Invalid submission: missing attempt token.');
+  if(!r.answers || Array.isArray(r.answers) || typeof r.answers!=='object'){
+    throw new Error('Invalid submission: answers must be an object keyed by question ID.');
+  }
+
   const tokenHash=hash_(r.attemptToken),lock=LockService.getScriptLock();
   lock.waitLock(10000);
   try{
     const sh=db_().getSheetByName(SHEET_ATTEMPTS),data=sh.getDataRange().getValues();
     let row=-1,a;
     for(let i=1;i<data.length;i++){
-      if(data[i][4]===tokenHash){row=i+1;a=data[i];break;}
+      if(String(data[i][4])===tokenHash){row=i+1;a=data[i];break;}
     }
     if(row<0)throw new Error('Attempt not found.');
-    if(a[7]==='SUBMITTED')throw new Error('This attempt was already submitted.');
+    if(String(a[7])==='SUBMITTED')throw new Error('This attempt was already submitted.');
+
     const now=new Date(),started=new Date(a[5]),deadline=new Date(a[6]);
     if(now.getTime()>deadline.getTime()+120000)throw new Error('Submission window has expired.');
-    const qs=getQuestions_();
-    if(r.answers.length!==qs.length)throw new Error('Answer count does not match quiz.');
 
-    // IMPORTANT: null/undefined/empty means unanswered and scores 0.
-    // Only a real integer option index 0..3 can earn a mark.
-    let score=0;
-    qs.forEach((q,i)=>{
-      const submitted=r.answers[i];
-      if(submitted===null||submitted===undefined||submitted==='') return;
-      if(!Number.isInteger(submitted)||submitted<0||submitted>3){
-        throw new Error('Invalid answer value at question '+(i+1)+'.');
+    const qs=getQuestions_();
+    const validIds=new Set(qs.map(q=>String(q.id)));
+    const submittedIds=Object.keys(r.answers);
+
+    // Reject any question ID that did not come from the server-provided quiz.
+    submittedIds.forEach(id=>{
+      if(!validIds.has(String(id))){
+        throw new Error('Invalid question ID in submission.');
       }
+    });
+
+    let score=0;
+    let answeredCount=0;
+
+    // IMPORTANT:
+    // Only question IDs explicitly present in r.answers are scored.
+    // Missing question IDs mean UNANSWERED and always receive 0 marks.
+    // No numeric conversion is performed on missing/null values.
+    qs.forEach(q=>{
+      const id=String(q.id);
+      if(!Object.prototype.hasOwnProperty.call(r.answers,id)) return;
+
+      const submitted=r.answers[id];
+      if(!Number.isInteger(submitted) || submitted<0 || submitted>3){
+        throw new Error('Invalid answer for question '+id+'.');
+      }
+
+      answeredCount++;
       if(submitted===q.answer) score++;
     });
 
     const elapsed=Math.max(0,Math.min(Math.round((now-started)/1000),QUIZ_MINUTES*60));
-    db_().getSheetByName(SHEET_RESULTS).appendRow([a[0],a[1],a[2],a[3],score,elapsed,started,now]);
+    db_().getSheetByName(SHEET_RESULTS).appendRow([
+      a[0],a[1],a[2],a[3],score,elapsed,started,now
+    ]);
     sh.getRange(row,8).setValue('SUBMITTED');
-    // Score is returned only for internal/API compatibility. The participant frontend does not display it.
-    return{score,timeTakenSeconds:elapsed};
-  }finally{lock.releaseLock();}
-}
 
+    // Do not return score/correct answers to participants.
+    return{timeTakenSeconds:elapsed,answeredCount:answeredCount};
+  }finally{
+    lock.releaseLock();
+  }
+}
 function rankedResults_(){
   const sh=db_().getSheetByName(SHEET_RESULTS),v=sh.getDataRange().getValues().slice(1).filter(r=>r[0]);
   v.sort((a,b)=>Number(b[4])-Number(a[4])||Number(a[5])-Number(b[5])||new Date(a[7])-new Date(b[7]));

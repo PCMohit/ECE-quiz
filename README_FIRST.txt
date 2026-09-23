@@ -1,28 +1,31 @@
-ECE QUIZ FINAL FIXED VERSION
+ECE QUIZ — ACCURATE SCORING VERSION
 
-IMPORTANT SCORING FIX:
-The previous backend scored unanswered questions as option A because Number(null) becomes 0 in JavaScript. This version fixes that by scoring ONLY explicit integer answers 0..3. Unanswered questions are always 0 marks.
+SCORING ARCHITECTURE
+- The browser stores answers only for questions the participant explicitly selects.
+- Unanswered questions are omitted from the submission payload.
+- Apps Script scores only explicitly submitted question IDs.
+- Missing question IDs are always 0 marks.
+- No Number(null) conversion is used anywhere in scoring.
+- The Apps Script does not return the score/correct-answer count to the participant.
 
-PUBLIC GITHUB PAGES:
-Upload ONLY the contents of github-pages/ to your GitHub repository.
-Do NOT upload private-backend/questions.json.
+IMPORTANT DEPLOYMENT STEPS
+1. Upload ONLY the contents of github-pages/ to GitHub Pages.
+2. Keep private-backend/questions.json private; do not upload it to GitHub.
+3. Replace the existing Code.gs in your Google Apps Script with private-backend/apps-script/Code.gs.
+4. Save the Apps Script.
+5. Deploy > Manage deployments > Edit your EXISTING Web App > select New version > Deploy.
+6. Keep Execute as: Me and keep the same participant access setting.
+7. The /exec URL in github-pages/config.js is already preserved.
 
-PRIVATE APPS SCRIPT:
-Replace the existing Code.gs in Google Apps Script with:
-private-backend/apps-script/Code.gs
-Then save and update the EXISTING Web App deployment to a new version.
-Keep the same Execute as / access settings and the same /exec URL.
+TEST BEFORE COMPETITION
+- Use a fresh Participant ID.
+- Answer exactly 2 questions.
+- Leave 48 questions unanswered.
+- Submit.
+- Organizer Dashboard must show a score from 0 to 2.
+- If you answer only one question correctly, score must be exactly 1.
+- If you answer both correctly, score must be exactly 2.
+- Participant must see only submission confirmation, not score or correct answers.
 
-PRIVATE QUESTIONS:
-private-backend/questions.json is for Google Drive only.
-
-TEST:
-1. Use a fresh Participant ID.
-2. Start the quiz.
-3. Answer exactly 2 questions.
-4. Leave all other 48 unanswered.
-5. Submit.
-6. Organizer Dashboard / Results must show a score from 0 to 2 only.
-7. Participant must see only submission confirmation, not score or correct answers.
-
-If old attempts already exist with incorrect scores, those rows are historical and will not be automatically changed. For a clean competition database, clear old test rows from Attempts and Results before the real event.
+IMPORTANT
+Existing incorrect test rows in Google Sheets are historical data. Delete/clear old test rows from Attempts and Results before the real competition.
