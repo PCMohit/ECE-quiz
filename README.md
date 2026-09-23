@@ -1,55 +1,41 @@
-# ECE Quiz Competition — Google Drive / Google Sheets Edition
+# ECE Quiz — Google Drive / Google Sheets Edition
 
-## Changes in this fixed version
+This version has **no Firebase**. GitHub Pages hosts the frontend. A private Google Sheet in your Drive stores questions, attempts and results. Google Apps Script acts as the server so the browser never receives the answer key.
 
-- Public **Live Ranking / Leaderboard has been removed** from the participant website.
-- Participant result screen no longer shows score, marks, correct-answer count, or corrected questions.
-- Fixed the scoring bug where unanswered questions could be counted as option A (answer index 0).
-- Organizer dashboard still shows score, time, ranking, and exports CSV.
-- The existing Google Apps Script `/exec` URL remains the same when you edit/redeploy the existing Web App deployment.
-- No Firebase is used.
+## What is included
+- 50 MCQs / 30-minute quiz
+- one attempt per Participant ID
+- answer key stays in private Google Sheet
+- score calculated by Apps Script
+- server-side start/submission timestamps
+- ranking: score DESC, time ASC, submission ASC
+- organizer-only results dashboard
+- password-protected organizer results
+- CSV export
 
-## Important backend update
+## Setup
+1. In Google Drive create a blank Google Sheet named **ECE Quiz Competition Database**.
+2. Open the Sheet → **Extensions → Apps Script**.
+3. Replace the default Code.gs with `apps-script/Code.gs` from this package and Save.
+4. Return to the Sheet and reload it. Open **ECE Quiz Setup** menu:
+   - `1. Create/repair sheets`
+   - `2. Set organizer password`
+   - `3. Import questions JSON` and paste the entire contents of `questions.json`.
+5. In Apps Script choose **Deploy → New deployment → Web app**.
+   - Execute as: **Me**
+   - Who has access: choose the option that allows your participants to access the web app without signing into your Google account (the exact label depends on account type).
+   - Authorize the script when Google asks.
+6. Copy the deployed URL ending in `/exec`.
+7. Open `config.js` and replace `PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE` with that `/exec` URL.
+8. Upload the frontend files to GitHub Pages. Do **not** upload any Google password, OAuth secret, or private key. The organizer password is stored only in Apps Script Script Properties.
+9. Test with two different Participant IDs/devices, then test `admin.html`.
 
-Replace your current Apps Script `Code.gs` with `apps-script/Code.gs`.
+## Google Drive storage
+The Google Sheet itself is a file stored in Google Drive. Keep it **Private / Restricted**. Participants never need direct access to the Sheet.
 
-Then:
-1. Save the Apps Script.
-2. Deploy → Manage deployments.
-3. Edit the existing Web App deployment.
-4. Create/deploy the new version.
-5. Keep **Execute as: Me**.
-6. Keep the same participant access setting.
-7. The Web App `/exec` URL should remain the same when updating the existing deployment.
-
-## Frontend
-
-Update/upload these files to GitHub Pages:
-- `index.html`
-- `admin.html`
-- `config.js`
-- `css/style.css`
-- `js/api.js`
-- `js/quiz.js`
-- `js/admin.js`
-
-`config.js` already contains the same Apps Script `/exec` URL supplied in the uploaded project.
-
-## Security
-
-- Do NOT upload `questions.json` to GitHub Pages because it contains the correct-answer key.
-- Keep the Google Sheet private/restricted.
-- The answer key is read by Apps Script and is not sent to participants.
-- `questions.json` is included in this ZIP only as a backend/Drive source file; keep it out of the public GitHub Pages files.
-
-## Removed files
-
-`leaderboard.html` and `leaderboard.js` are intentionally not included in the public website package because the public Live Ranking feature has been removed.
-
-## Scoring behavior
-
-Each selected answer is compared with the corresponding correct answer.
-
-Unanswered questions are ignored and score 0 points.
-
-Therefore, if a participant attempts only 5 questions, the maximum possible score is 5/50.
+## Security notes
+- Do not put correct answers in frontend JavaScript.
+- Do not make the database Sheet public.
+- Do not put the organizer password in `config.js` or GitHub.
+- Apps Script has quotas/limits; this design is suitable for a normal college quiz, but it is not an unlimited high-traffic backend.
+- The participant-facing leaderboard has been removed. Results remain available to the organizer through `admin.html`.

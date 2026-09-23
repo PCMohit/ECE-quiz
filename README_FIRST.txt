@@ -1,19 +1,28 @@
-ECE QUIZ FIXED PACKAGE
+ECE QUIZ FINAL FIXED VERSION
 
-PUBLIC WEBSITE:
-Upload only the contents of github-pages/ to your GitHub Pages repository.
+IMPORTANT SCORING FIX:
+The previous backend scored unanswered questions as option A because Number(null) becomes 0 in JavaScript. This version fixes that by scoring ONLY explicit integer answers 0..3. Unanswered questions are always 0 marks.
 
-PRIVATE BACKEND:
-- private-backend/apps-script/Code.gs -> replace the current Apps Script Code.gs
-- private-backend/questions.json -> keep in private Google Drive; do NOT upload to GitHub
+PUBLIC GITHUB PAGES:
+Upload ONLY the contents of github-pages/ to your GitHub repository.
+Do NOT upload private-backend/questions.json.
 
-Changes:
-1. Public Live Ranking removed.
-2. Participant result page no longer shows score/correct count/time.
-3. Scoring fixed: unanswered questions are not counted as option A.
-4. Organizer dashboard and CSV export remain.
-5. config.js keeps the existing Apps Script /exec URL.
+PRIVATE APPS SCRIPT:
+Replace the existing Code.gs in Google Apps Script with:
+private-backend/apps-script/Code.gs
+Then save and update the EXISTING Web App deployment to a new version.
+Keep the same Execute as / access settings and the same /exec URL.
 
-After replacing Code.gs:
-Deploy -> Manage deployments -> Edit existing Web App -> Deploy a new version.
-Keep Execute as: Me and the same access setting. The /exec URL stays the same when updating the existing deployment.
+PRIVATE QUESTIONS:
+private-backend/questions.json is for Google Drive only.
+
+TEST:
+1. Use a fresh Participant ID.
+2. Start the quiz.
+3. Answer exactly 2 questions.
+4. Leave all other 48 unanswered.
+5. Submit.
+6. Organizer Dashboard / Results must show a score from 0 to 2 only.
+7. Participant must see only submission confirmation, not score or correct answers.
+
+If old attempts already exist with incorrect scores, those rows are historical and will not be automatically changed. For a clean competition database, clear old test rows from Attempts and Results before the real event.
