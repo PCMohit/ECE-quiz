@@ -1,16 +1,1 @@
-function getResults(){return JSON.parse(localStorage.getItem('quizResults')||'[]').sort((a,b)=>b.score-a.score||a.timeTaken-b.timeTaken||new Date(a.submittedAt)-new Date(b.submittedAt))}
-function fmt(s){return `${Math.floor(s/60)}m ${s%60}s`}
-function render(){
- const data=getResults(), body=document.getElementById('resultsBody'), empty=document.getElementById('empty'), stats=document.getElementById('stats');
- empty.hidden=data.length>0;
- stats.innerHTML=`<div><small>Participants</small><strong>${data.length}</strong></div><div><small>Highest score</small><strong>${data.length?data[0].score:'—'} / 50</strong></div><div><small>Average score</small><strong>${data.length?(data.reduce((a,x)=>a+x.score,0)/data.length).toFixed(1):'—'}</strong></div>`;
- body.innerHTML=data.map((x,i)=>`<tr><td><b>${i+1}</b></td><td>${esc(x.name)}</td><td>${esc(x.roll)}</td><td><b>${x.score}/50</b></td><td>${fmt(x.timeTaken)}</td><td>${new Date(x.submittedAt).toLocaleString()}</td></tr>`).join('');
-}
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
-document.getElementById('exportBtn').addEventListener('click',()=>{
- const data=getResults(); const rows=[['Rank','Name','Participant ID','Email','Score','Time Taken (sec)','Submitted At'],...data.map((x,i)=>[i+1,x.name,x.roll,x.email,x.score,x.timeTaken,x.submittedAt])];
- const csv=rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
- const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='quiz-results.csv';a.click();URL.revokeObjectURL(a.href);
-});
-document.getElementById('clearBtn').addEventListener('click',()=>{if(confirm('Delete all demo results from this browser?')){localStorage.removeItem('quizResults');render()}});
-render();
+const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])),fmt=s=>`${Math.floor(s/60)}m ${s%60}s`;let password='',results=[];async function login(){password=$('password').value;try{$('loginBtn').disabled=true;await load();$('loginCard').hidden=true;$('dashboard').hidden=false}catch(e){$('loginError').textContent=e.message}finally{$('loginBtn').disabled=false}}async function load(){const d=await QuizAPI.call('adminResults',{adminPassword:password});results=d.results;$('summary').textContent=`${results.length} submitted participant(s)`;$('resultsBody').innerHTML=results.map(x=>`<tr><td>${x.rank}</td><td>${esc(x.name)}</td><td>${esc(x.participantId)}</td><td>${esc(x.email)}</td><td>${esc(x.institution)}</td><td><strong>${x.score}/50</strong></td><td>${fmt(x.timeTakenSeconds)}</td><td>${new Date(x.submittedAt).toLocaleString()}</td></tr>`).join('')||'<tr><td colspan="8">No submissions yet.</td></tr>'}function csv(){const rows=[['Rank','Name','Participant ID','Email','Institution','Score','Time Taken (sec)','Submitted At'],...results.map(x=>[x.rank,x.name,x.participantId,x.email,x.institution,x.score,x.timeTakenSeconds,x.submittedAt])];const text=rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'text/csv'}));a.download='ece-quiz-results.csv';a.click()}$('loginBtn').onclick=login;$('refreshBtn').onclick=()=>load().catch(e=>$('dashError').textContent=e.message);$('csvBtn').onclick=csv;$('logoutBtn').onclick=()=>location.reload();
