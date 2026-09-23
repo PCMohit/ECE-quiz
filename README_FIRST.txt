@@ -1,31 +1,73 @@
-ECE QUIZ — ACCURATE SCORING VERSION
+ECE QUIZ — ACCURATE MARKING VERSION
+====================================
 
-SCORING ARCHITECTURE
-- The browser stores answers only for questions the participant explicitly selects.
-- Unanswered questions are omitted from the submission payload.
-- Apps Script scores only explicitly submitted question IDs.
-- Missing question IDs are always 0 marks.
-- No Number(null) conversion is used anywhere in scoring.
-- The Apps Script does not return the score/correct-answer count to the participant.
+This package fixes the scoring architecture, not just the symptom.
 
-IMPORTANT DEPLOYMENT STEPS
-1. Upload ONLY the contents of github-pages/ to GitHub Pages.
-2. Keep private-backend/questions.json private; do not upload it to GitHub.
-3. Replace the existing Code.gs in your Google Apps Script with private-backend/apps-script/Code.gs.
-4. Save the Apps Script.
-5. Deploy > Manage deployments > Edit your EXISTING Web App > select New version > Deploy.
-6. Keep Execute as: Me and keep the same participant access setting.
-7. The /exec URL in github-pages/config.js is already preserved.
+KEY SCORING RULE
+-----------------
+The participant browser does NOT send a 50-element array containing nulls.
+It sends an object containing ONLY explicitly answered question IDs.
 
-TEST BEFORE COMPETITION
-- Use a fresh Participant ID.
-- Answer exactly 2 questions.
-- Leave 48 questions unanswered.
-- Submit.
-- Organizer Dashboard must show a score from 0 to 2.
-- If you answer only one question correctly, score must be exactly 1.
-- If you answer both correctly, score must be exactly 2.
-- Participant must see only submission confirmation, not score or correct answers.
+Example:
+{
+  "1": "B",
+  "2": "A"
+}
 
-IMPORTANT
-Existing incorrect test rows in Google Sheets are historical data. Delete/clear old test rows from Attempts and Results before the real competition.
+Questions 3–50 are absent => unanswered => 0 marks.
+
+The server checks every submitted question ID against the private Questions sheet.
+Only A/B/C/D are valid answers. Missing question IDs are never converted to A.
+The server also enforces score <= answered count.
+
+IMPORTANT BACKEND STEPS
+-----------------------
+1. Open your Google Sheet → Extensions → Apps Script.
+2. Replace Code.gs with:
+   private-backend/apps-script/Code.gs
+3. Save.
+4. In the Google Sheet, reload the sheet.
+5. Run: ECE Quiz Setup → 1. Create/repair sheets
+6. Run: ECE Quiz Setup → 3. Import questions JSON
+   Enter the exact Drive filename: questions.json
+7. Verify Questions → Correct Answer now contains A/B/C/D.
+8. Deploy → Manage deployments → edit your existing Web App → deploy a new version.
+9. Keep Execute as: Me and keep the same participant access setting.
+10. The existing /exec URL in github-pages/config.js is preserved.
+
+FRONTEND / GITHUB PAGES
+-----------------------
+Upload ONLY the contents of github-pages/ to GitHub Pages.
+Do NOT upload private-backend/questions.json.
+Do NOT upload Code.gs to the public GitHub Pages site.
+
+PUBLIC PARTICIPANT RESULT
+-------------------------
+After submission, participants see only a submission confirmation.
+They do not receive score, correct answers, or answer review.
+
+LIVE RANKING
+------------
+The public Live Ranking page has been removed.
+The organizer dashboard remains password protected.
+
+AUDIT INFORMATION
+------------------
+The organizer dashboard also shows Answered count (for example 2/50).
+The private Results sheet stores this value in the Answered Count column.
+This makes testing the marking behavior straightforward.
+
+MANDATORY TEST BEFORE THE EVENT
+-------------------------------
+Use a fresh Participant ID.
+A. Answer 0 questions → Score must be 0, Answered must be 0/50.
+B. Answer exactly 1 question correctly → Score must be 1, Answered 1/50.
+C. Answer exactly 1 question incorrectly → Score must be 0, Answered 1/50.
+D. Answer exactly 2 questions → Score can only be 0, 1, or 2; never 27, 25, etc.
+E. Answer exactly 5 questions → Score can only be 0 through 5.
+
+OLD TEST DATA
+-------------
+Previous incorrect test submissions remain historical rows in Results.
+Delete old test rows before the real competition so the organizer dashboard starts clean.
+Use fresh Participant IDs for every test because Attempts intentionally blocks reused IDs.
