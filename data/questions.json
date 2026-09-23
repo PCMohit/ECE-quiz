@@ -1,0 +1,502 @@
+[
+  {
+    "q": "What is the SI unit of electrical resistance?",
+    "options": [
+      "Volt",
+      "Ohm",
+      "Ampere",
+      "Watt"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "What is the SI unit of electric current?",
+    "options": [
+      "Volt",
+      "Ampere",
+      "Ohm",
+      "Coulomb"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "What is the SI unit of voltage?",
+    "options": [
+      "Watt",
+      "Joule",
+      "Volt",
+      "Henry"
+    ],
+    "answer": 2
+  },
+  {
+    "q": "Which component stores electrical energy in an electric field?",
+    "options": [
+      "Inductor",
+      "Capacitor",
+      "Resistor",
+      "Diode"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "Which component stores energy in a magnetic field?",
+    "options": [
+      "Capacitor",
+      "Resistor",
+      "Inductor",
+      "Transistor"
+    ],
+    "answer": 2
+  },
+  {
+    "q": "A diode primarily allows current to flow in which direction?",
+    "options": [
+      "Both equally",
+      "One direction",
+      "No direction",
+      "Randomly"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "Which material is commonly used as a semiconductor?",
+    "options": [
+      "Copper",
+      "Silicon",
+      "Aluminium",
+      "Iron"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "What is the unit of power?",
+    "options": [
+      "Watt",
+      "Ohm",
+      "Volt",
+      "Farad"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "Ohm's law is represented by which equation?",
+    "options": [
+      "P=VI",
+      "V=IR",
+      "Q=CV",
+      "F=ma"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "A resistor connected in series carries what current?",
+    "options": [
+      "Different current through each resistor",
+      "Same current",
+      "Zero current",
+      "Alternating current only"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "In a parallel circuit, the voltage across each branch is generally:",
+    "options": [
+      "The same",
+      "Always zero",
+      "Different by definition",
+      "Equal to current"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "Which device is used to measure current?",
+    "options": [
+      "Voltmeter",
+      "Ammeter",
+      "Ohmmeter",
+      "Wattmeter"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "Which device is used to measure voltage?",
+    "options": [
+      "Ammeter",
+      "Voltmeter",
+      "Galvanometer only",
+      "Potentiometer"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "What is the unit of capacitance?",
+    "options": [
+      "Farad",
+      "Henry",
+      "Tesla",
+      "Weber"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "What is the unit of inductance?",
+    "options": [
+      "Farad",
+      "Henry",
+      "Ohm",
+      "Siemens"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "An LED is a type of:",
+    "options": [
+      "Diode",
+      "Transformer",
+      "Resistor",
+      "Relay"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "What does LED stand for?",
+    "options": [
+      "Light Emitting Diode",
+      "Low Energy Device",
+      "Linear Emission Driver",
+      "Light Electrical Detector"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "A transistor can be used as an amplifier and a:",
+    "options": [
+      "Switch",
+      "Fuse only",
+      "Battery",
+      "Transformer"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "Which transistor terminal controls the collector current in a BJT?",
+    "options": [
+      "Emitter",
+      "Base",
+      "Collector",
+      "Gate"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "Which terminal is used to control a MOSFET?",
+    "options": [
+      "Base",
+      "Gate",
+      "Emitter",
+      "Anode"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "What does AC stand for?",
+    "options": [
+      "Active Current",
+      "Alternating Current",
+      "Applied Charge",
+      "Automatic Control"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "What does DC stand for?",
+    "options": [
+      "Direct Current",
+      "Digital Charge",
+      "Dynamic Current",
+      "Dual Control"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "A transformer normally operates with:",
+    "options": [
+      "DC only",
+      "AC",
+      "No voltage",
+      "Static charge"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "A fuse is mainly used for:",
+    "options": [
+      "Voltage amplification",
+      "Overcurrent protection",
+      "Signal generation",
+      "Energy storage"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "What happens to resistance when a typical metallic conductor gets hotter?",
+    "options": [
+      "It usually increases",
+      "It becomes zero",
+      "It always decreases",
+      "It becomes infinite"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "Which logic gate gives HIGH only when all inputs are HIGH?",
+    "options": [
+      "OR",
+      "AND",
+      "NOT",
+      "XOR"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "Which logic gate gives HIGH when at least one input is HIGH?",
+    "options": [
+      "AND",
+      "OR",
+      "NOR",
+      "XNOR"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "Which gate is called an inverter?",
+    "options": [
+      "AND",
+      "OR",
+      "NOT",
+      "NAND"
+    ],
+    "answer": 2
+  },
+  {
+    "q": "NAND is a combination of:",
+    "options": [
+      "AND + NOT",
+      "OR + NOT",
+      "XOR + NOT",
+      "AND + OR"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "NOR is a combination of:",
+    "options": [
+      "AND + NOT",
+      "OR + NOT",
+      "XOR + NOT",
+      "NOT + NOT"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "What is the binary representation of decimal 2?",
+    "options": [
+      "01",
+      "10",
+      "11",
+      "100"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "How many bits are in one byte?",
+    "options": [
+      "4",
+      "8",
+      "16",
+      "32"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "Which instrument displays voltage variations as a waveform?",
+    "options": [
+      "Oscilloscope",
+      "Ammeter",
+      "Fuse",
+      "Relay"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "What is the purpose of a rectifier?",
+    "options": [
+      "Convert AC to DC",
+      "Convert DC to AC only",
+      "Store charge",
+      "Measure resistance"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "A bridge rectifier commonly uses how many diodes?",
+    "options": [
+      "1",
+      "2",
+      "4",
+      "6"
+    ],
+    "answer": 2
+  },
+  {
+    "q": "What is a Zener diode commonly used for?",
+    "options": [
+      "Voltage regulation",
+      "Current measurement",
+      "Mechanical switching",
+      "Data storage"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "A potentiometer is a variable:",
+    "options": [
+      "Capacitor",
+      "Resistor",
+      "Inductor",
+      "Diode"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "What is the unit of frequency?",
+    "options": [
+      "Hertz",
+      "Watt",
+      "Joule",
+      "Coulomb"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "What does PCB stand for?",
+    "options": [
+      "Printed Circuit Board",
+      "Power Control Box",
+      "Programmable Current Bus",
+      "Primary Circuit Battery"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "Which component is commonly used to limit current?",
+    "options": [
+      "Resistor",
+      "Capacitor",
+      "Transformer",
+      "Antenna"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "Which component can convert electrical energy into mechanical motion?",
+    "options": [
+      "Motor",
+      "Resistor",
+      "Capacitor",
+      "Diode"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "Which component converts mechanical energy into electrical energy?",
+    "options": [
+      "Generator",
+      "Resistor",
+      "LED",
+      "Fuse"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "A relay is essentially an electrically controlled:",
+    "options": [
+      "Switch",
+      "Capacitor",
+      "Battery",
+      "Sensor only"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "What is the main purpose of a capacitor in a DC power supply?",
+    "options": [
+      "Filtering/smoothing",
+      "Increasing resistance",
+      "Generating AC",
+      "Measuring current"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "Which quantity is measured in coulombs?",
+    "options": [
+      "Charge",
+      "Power",
+      "Resistance",
+      "Frequency"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "Electrical power can be calculated as:",
+    "options": [
+      "P=VI",
+      "P=R/I",
+      "P=V+I",
+      "P=I/R"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "In a purely resistive AC circuit, voltage and current are:",
+    "options": [
+      "90° apart",
+      "In phase",
+      "180° apart",
+      "Unrelated"
+    ],
+    "answer": 1
+  },
+  {
+    "q": "What is the main function of a voltage regulator?",
+    "options": [
+      "Maintain a desired voltage",
+      "Measure current",
+      "Store magnetic energy",
+      "Generate mechanical power"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "Which sensor can be used to measure temperature?",
+    "options": [
+      "Thermistor",
+      "Photodiode only",
+      "Relay",
+      "Fuse"
+    ],
+    "answer": 0
+  },
+  {
+    "q": "A thermistor's resistance changes primarily with:",
+    "options": [
+      "Temperature",
+      "Sound",
+      "Pressure only",
+      "Color"
+    ],
+    "answer": 0
+  }
+]

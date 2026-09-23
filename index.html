@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Electronics Quiz Competition</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div><strong>⚡ Electronics Quiz</strong><span class="tag">Competition Portal</span></div>
+  <nav><a href="index.html">Quiz</a><a href="admin.html">Organizer Dashboard</a></nav>
+</header>
+<main class="container">
+  <section id="registration" class="card hero">
+    <span class="eyebrow">50 Questions • MCQ • Timed</span>
+    <h1>Basic Electronics Quiz Competition</h1>
+    <p>Enter your details to begin. The timer starts when you click Start Quiz.</p>
+    <div class="grid2">
+      <label>Full Name<input id="name" autocomplete="name" placeholder="Your full name"></label>
+      <label>Roll Number / Participant ID<input id="roll" placeholder="e.g. ECE-101"></label>
+      <label>Email (optional)<input id="email" type="email" placeholder="name@example.com"></label>
+    </div>
+    <div class="notice"><b>Demo:</b> 30-minute timer. Your result is stored in this browser for testing.</div>
+    <button id="startBtn" class="primary">Start Quiz →</button>
+    <p id="regError" class="error"></p>
+  </section>
+
+  <section id="quiz" hidden>
+    <div class="quiz-head card">
+      <div><small>Participant</small><strong id="participantLabel"></strong></div>
+      <div class="timer" id="timer">30:00</div>
+      <div><small>Progress</small><strong id="progress">1 / 50</strong></div>
+    </div>
+    <div id="questionArea"></div>
+    <div class="quiz-nav">
+      <button id="prevBtn" class="secondary">← Previous</button>
+      <button id="nextBtn" class="primary">Next →</button>
+      <button id="submitBtn" class="danger" hidden>Submit Quiz</button>
+    </div>
+    <div class="progressbar"><span id="bar"></span></div>
+  </section>
+
+  <section id="result" class="card" hidden>
+    <span class="eyebrow">Submission received</span>
+    <h2>Quiz submitted successfully.</h2>
+    <div class="result-grid">
+      <div><small>Score</small><strong id="resultScore"></strong></div>
+      <div><small>Correct</small><strong id="resultCorrect"></strong></div>
+      <div><small>Time taken</small><strong id="resultTime"></strong></div>
+    </div>
+    <p>Your result has been recorded in the demo browser. The organizer dashboard can be opened from the top navigation.</p>
+    <a class="button secondary" href="admin.html">Open Organizer Dashboard</a>
+  </section>
+</main>
+<script src="js/quiz.js?v=2"></script>
+</body>
+</html>

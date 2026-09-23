@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Organizer Dashboard</title><link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar"><div><strong>⚡ Organizer Dashboard</strong><span class="tag">Demo Admin</span></div><nav><a href="index.html">Quiz</a></nav></header>
+<main class="container">
+<section class="card">
+  <div class="dashboard-head">
+    <div><span class="eyebrow">Results</span><h1>Participant Rankings</h1><p>Sorted by score ↓, time taken ↑, then submission time ↑.</p></div>
+    <div class="actions"><button id="exportBtn" class="primary">Export CSV</button><button id="clearBtn" class="danger">Clear Demo Results</button></div>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div class="table-wrap">
+  <table><thead><tr><th>Rank</th><th>Participant</th><th>ID</th><th>Score</th><th>Time</th><th>Submitted</th></tr></thead><tbody id="resultsBody"></tbody></table>
+  </div>
+  <p id="empty" class="muted">No submissions yet. Complete the quiz once to see a result.</p>
+</section>
+<section class="card security">
+<h2>Production note</h2>
+<p>This dashboard is intentionally a frontend demo. Browser localStorage is not suitable for a real competition because each device has its own data and participants can inspect/modify it. For deployment, connect this UI to Supabase/Firebase and enforce organizer authentication plus server-side score/time validation.</p>
+</section>
+</main>
+<script src="js/admin.js"></script>
+</body>
+</html>
