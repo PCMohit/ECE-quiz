@@ -5,48 +5,107 @@ window.QuizAPI = {
       throw new Error('Apps Script URL is not configured yet.');
     }
 
-    const timeoutMs = Number(options.timeoutMs || 25000);
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    const timeoutMs = Number(options.timeoutMs || 10000);
+    const retries = Number(options.retries ?? 5);
+    const onRetry = typeof options.onRetry === 'function' ? options.onRetry : () => {};
 
-    try {
-      const body = new URLSearchParams({
-        payload: JSON.stringify({ action, ...payload })
-      });
+    let lastError = null;
 
-      const r = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
-        },
-        body,
-        signal: controller.signal,
-        cache: 'no-store'
-      });
-
-      const text = await r.text();
-      let d;
+    for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        d = JSON.parse(text);
-      } catch (_) {
-        throw new Error('The quiz server returned an invalid response. Please try again.');
-      }
+        const body = new URLSearchParams({
+          payload: JSON.stringify({ action, ...payload })
+        });
 
-      if (!r.ok || !d.ok) {
-        throw new Error(d.error || `Quiz server error (${r.status}).`);
-      }
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-      return d;
-    } catch (e) {
-      if (e.name === 'AbortError') {
-        throw new Error('The quiz server is taking too long to respond. Please wait a few seconds and try again.');
+        let response;
+        try {
+          response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+            },
+            body,
+            signal: controller.signal,
+            cache: 'no-store'
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
+
+        const text = await response.text();
+        let data = null;
+
+        try {
+          data = JSON.parse(text);
+        } catch (_) {
+          // Apps Script can return an HTML error page during a burst. Treat that as retryable.
+          throw Object.assign(new Error('Temporary quiz server response.'), { retryable: true });
+        }
+
+        if (!response.ok) {
+          throw Object.assign(
+            new Error(data && data.error ? data.error : `Quiz server error (${response.status}).`),
+            { retryable: data && data.retryable !== false }
+          );
+        }
+
+        if (!data.ok) {
+          const err = new Error(data.error || 'Quiz server request failed.');
+          err.retryable = data.retryable === true;
+          throw err;
+        }
+
+        return data;
+      } catch (e) {
+        lastError = normalizeNetworkError_(e);
+        const retryable = lastError.retryable === true || e.name === 'AbortError' || e instanceof TypeError;
+
+        if (!retryable || attempt >= retries) {
+          throw lastError;
+        }
+
+        const base = Math.min(7000, 500 * Math.pow(2, attempt));
+        const jitter = Math.floor(Math.random() * 600);
+        const delay = base + jitter;
+
+        onRetry({
+          attempt: attempt + 1,
+          totalAttempts: retries + 1,
+          delayMs: delay,
+          message: lastError.message
+        });
+
+        await sleep_(delay);
       }
-      if (e instanceof TypeError) {
-        throw new Error('Could not reach the quiz server. Please check your internet connection and try again.');
-      }
-      throw e;
-    } finally {
-      clearTimeout(timeoutId);
     }
+
+    throw lastError || new Error('Quiz server request failed.');
   }
 };
+
+function sleep_(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function normalizeNetworkError_(e) {
+  if (!e) return new Error('Quiz server request failed.');
+
+  if (e.name === 'AbortError') {
+    return Object.assign(
+      new Error('The quiz server is busy or taking too long to respond.'),
+      { retryable: true }
+    );
+  }
+
+  if (e instanceof TypeError) {
+    return Object.assign(
+      new Error('Network connection problem. Retrying automatically...'),
+      { retryable: true }
+    );
+  }
+
+  return e;
+}

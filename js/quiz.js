@@ -5,6 +5,8 @@ let attemptToken = null;
 let deadlineMs = 0;
 let timerId = null;
 let submitting = false;
+let startRequestId = null;
+let submissionRequestId = null;
 let loadingQuestionsPromise = null;
 
 const $ = id => document.getElementById(id);
@@ -12,23 +14,46 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({
   '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;'
 }[c]));
 
-// Preload the public question set while the participant fills in the registration form.
-// This moves the 50-question payload away from the critical Start Quiz click.
+function makeRequestId(prefix){
+  if (window.crypto && typeof crypto.randomUUID === 'function') {
+    return `${prefix}-${crypto.randomUUID()}`;
+  }
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+}
+
+function setStatus(message, type = 'muted'){
+  const el = $('serverStatus');
+  if (!el) return;
+  el.textContent = message || '';
+  el.className = `status ${type}`;
+}
+
 async function preloadQuestions(){
   if (questions.length === 50) return questions;
   if (loadingQuestionsPromise) return loadingQuestionsPromise;
 
-  loadingQuestionsPromise = QuizAPI.call('quizInfo', {}, {timeoutMs:20000})
-    .then(d => {
-      if (!Array.isArray(d.questions) || d.questions.length !== 50) {
-        throw new Error('The server returned an invalid quiz.');
-      }
-      questions = d.questions;
-      return questions;
-    })
-    .finally(() => {
-      loadingQuestionsPromise = null;
-    });
+  setStatus('Connecting to quiz server…', 'muted');
+
+  loadingQuestionsPromise = QuizAPI.call('quizInfo', {}, {
+    timeoutMs: 8000,
+    retries: 6,
+    onRetry: info => setStatus(
+      `Server is busy — reconnecting (${info.attempt}/${info.totalAttempts})…`,
+      'warning'
+    )
+  }).then(d => {
+    if (!Array.isArray(d.questions) || d.questions.length !== 50) {
+      throw new Error('The server returned an invalid 50-question quiz.');
+    }
+    questions = d.questions;
+    setStatus('Quiz server ready.', 'success');
+    return questions;
+  }).catch(e => {
+    setStatus('Quiz server connection could not be established. You can try again.', 'error');
+    throw e;
+  }).finally(() => {
+    loadingQuestionsPromise = null;
+  });
 
   return loadingQuestionsPromise;
 }
@@ -46,31 +71,35 @@ async function startQuiz(){
   }
 
   $('startBtn').disabled = true;
-  $('startBtn').textContent = 'Starting Quiz...';
+  $('startBtn').textContent = 'Connecting…';
+  startRequestId = makeRequestId('start');
 
   try {
-    // Ensure questions are ready. Usually this has already completed in the background.
     await preloadQuestions();
 
     const d = await QuizAPI.call('startAttempt', {
       name,
       participantId,
       email,
-      institution
-    }, {timeoutMs:25000});
+      institution,
+      startRequestId
+    }, {
+      timeoutMs: 8000,
+      retries: 7,
+      onRetry: info => {
+        $('startBtn').textContent = `Retrying… ${info.attempt}/${info.totalAttempts}`;
+        setStatus(`Server is busy — retrying Start Quiz (${info.attempt}/${info.totalAttempts})…`, 'warning');
+      }
+    });
 
-    if(d.questions && Array.isArray(d.questions) && d.questions.length === 50){
-      // Keep server-supplied public questions as the authoritative set for this attempt.
-      questions = d.questions;
+    if (!d.attemptToken || !Number.isFinite(Number(d.deadlineMs))) {
+      throw new Error('The quiz server returned an invalid attempt.');
     }
 
-    if(questions.length !== 50) {
-      throw new Error('The server returned an invalid quiz.');
-    }
-
-    answers = Object.create(null);
     attemptToken = d.attemptToken;
     deadlineMs = Number(d.deadlineMs);
+    answers = Object.create(null);
+    submissionRequestId = null;
     current = 0;
     submitting = false;
 
@@ -81,6 +110,8 @@ async function startQuiz(){
     startTimer();
   } catch(e) {
     $('regError').textContent = e.message;
+    startRequestId = null;
+    setStatus(e.message, 'error');
   } finally {
     if(!attemptToken){
       $('startBtn').disabled = false;
@@ -97,14 +128,14 @@ function render(){
   $('bar').style.width = `${(current + 1) * 100 / questions.length}%`;
 
   $('questionArea').innerHTML = `
-    <div class="card">
-      <span class="eyebrow">Q${current + 1}</span>
+    <div class="card question-card">
+      <span class="eyebrow">Question ${current + 1}</span>
       <h2>${esc(q.question)}</h2>
       ${q.options.map((o, i) => {
         const letter = String.fromCharCode(65 + i);
         return `<label class="option">
           <input type="radio" name="answer" value="${letter}" ${answers[qid] === letter ? 'checked' : ''}>
-          <span>${esc(o)}</span>
+          <span><strong>${letter}.</strong> ${esc(o)}</span>
         </label>`;
       }).join('')}
     </div>`;
@@ -129,6 +160,7 @@ function startTimer(){
 function updateTimer(){
   const left = Math.max(0, deadlineMs - Date.now());
   $('timer').textContent = fmtMs(left);
+
   if(left <= 0){
     clearInterval(timerId);
     submitQuiz(true);
@@ -140,25 +172,44 @@ async function submitQuiz(auto = false){
 
   submitting = true;
   clearInterval(timerId);
+  submissionRequestId = makeRequestId('submit');
   $('submitBtn').disabled = true;
-  $('submitBtn').textContent = 'Submitting...';
+  $('submitBtn').textContent = auto ? 'Submitting automatically…' : 'Submitting…';
+  setStatus(auto ? 'Time is up. Submitting your answers…' : 'Submitting your answers…', 'muted');
 
   try{
-    // Only explicitly answered question IDs are sent.
     await QuizAPI.call('submitAttempt', {
       attemptToken,
+      submissionRequestId,
       answers: Object.assign({}, answers)
-    }, {timeoutMs:25000});
+    }, {
+      timeoutMs: 8000,
+      retries: 7,
+      onRetry: info => {
+        $('submitBtn').textContent = `Retrying submission… ${info.attempt}/${info.totalAttempts}`;
+        setStatus(`Server is busy — retrying submission (${info.attempt}/${info.totalAttempts})…`, 'warning');
+      }
+    });
 
     $('quiz').hidden = true;
     $('result').hidden = false;
     if(auto) $('result').querySelector('h2').textContent = 'Time expired — quiz submitted';
     attemptToken = null;
+    submissionRequestId = null;
+    setStatus('', 'muted');
   }catch(e){
-    alert(e.message);
+    // Keep the attempt and request ID alive so a retry is safe and idempotent.
     submitting = false;
     $('submitBtn').disabled = false;
-    $('submitBtn').textContent = 'Submit Quiz';
+    $('submitBtn').textContent = 'Try Submission Again';
+    setStatus(e.message, 'error');
+
+    if(auto){
+      // If the automatic submission exhausted its retries, give the participant a clear action.
+      alert('The quiz time has ended, but the server could not confirm your submission. Please click "Try Submission Again" immediately.');
+    } else {
+      alert(e.message);
+    }
   }
 }
 
@@ -172,8 +223,12 @@ $('prevBtn').onclick = () => { if(current){ current--; render(); } };
 $('nextBtn').onclick = () => { if(current < questions.length - 1){ current++; render(); } };
 $('submitBtn').onclick = () => submitQuiz(false);
 
-// Start loading question data immediately, without blocking registration.
+// Preload while the registration form is open.
 preloadQuestions().catch(() => {});
+
+window.addEventListener('online', () => {
+  if (!attemptToken) preloadQuestions().catch(() => {});
+});
 
 window.addEventListener('beforeunload', e => {
   if(attemptToken){

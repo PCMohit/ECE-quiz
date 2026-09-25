@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>ECE Quiz Competition</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=20260925-r1">
 </head>
 <body>
   <header class="top">
@@ -12,22 +13,28 @@
       <div class="brand">ECE QUIZ</div>
       <div class="muted">Electronics & Communication Engineering Competition</div>
     </div>
-    <nav></nav>
   </header>
+
   <main class="container">
     <section id="registration" class="card hero">
-      <span class="eyebrow">50 MCQs • 30 minutes</span>
+      <span class="eyebrow">50 MCQs • 30 Minutes</span>
       <h1>Electronics Quiz Competition</h1>
-      <p>Enter your details and complete the quiz. Your submission is evaluated securely by the quiz server.</p>
+      <p>Enter your details and complete the quiz. Your answers are evaluated securely by the quiz server.</p>
+
       <div class="grid2">
-        <label>Name<input id="name" maxlength="80" placeholder="Your full name"></label>
-        <label>Participant ID / Roll No.<input id="roll" maxlength="40" placeholder="e.g. ECE2026-001"></label>
-        <label>Email (optional)<input id="email" type="email" maxlength="120"></label>
-        <label>Institution (optional)<input id="institution" maxlength="120"></label>
+        <label>Name<input id="name" maxlength="80" placeholder="Your full name" autocomplete="name"></label>
+        <label>Participant ID / Roll No.<input id="roll" maxlength="40" placeholder="e.g. ECE2026-001" autocomplete="off"></label>
+        <label>Email (optional)<input id="email" type="email" maxlength="120" autocomplete="email"></label>
+        <label>Institution (optional)<input id="institution" maxlength="120" autocomplete="organization"></label>
       </div>
-      <p id="regError" class="error"></p>
+
+      <p id="regError" class="error" aria-live="polite"></p>
+      <p id="serverStatus" class="status muted" aria-live="polite">Connecting to quiz server…</p>
       <button id="startBtn" class="btn primary">Start Quiz</button>
-      <div class="notice">One attempt is allowed per Participant ID. Do not refresh after starting.</div>
+
+      <div class="notice">
+        One attempt is allowed per Participant ID. Do not refresh or close the browser after starting.
+      </div>
     </section>
 
     <section id="quiz" hidden>
@@ -38,8 +45,10 @@
         </div>
         <div class="timer" id="timer">30:00</div>
       </div>
+
       <div class="progress"><div id="bar"></div></div>
       <div id="questionArea"></div>
+
       <div class="actions">
         <button id="prevBtn" class="btn">Previous</button>
         <button id="nextBtn" class="btn primary">Next</button>
@@ -48,14 +57,15 @@
     </section>
 
     <section id="result" class="card result" hidden>
-      <span class="eyebrow">Submission received</span>
+      <span class="eyebrow">Submission Received</span>
       <h2>Quiz submitted successfully</h2>
       <p>Your submission has been recorded successfully.</p>
-      <p>Your marks, correct answers, and detailed result are available only to the organizer.</p>
+      <p class="muted">Marks, correct answers, and the detailed result are available only to the organizer.</p>
     </section>
   </main>
-  <script src="config.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/quiz.js"></script>
+
+  <script src="config.js?v=20260925-r1"></script>
+  <script src="js/api.js?v=20260925-r1"></script>
+  <script src="js/quiz.js?v=20260925-r1"></script>
 </body>
 </html>

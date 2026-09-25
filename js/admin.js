@@ -2,13 +2,17 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({
   '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;'
 }[c]));
-const fmt = s => `${Math.floor(Number(s) / 60)}m ${Number(s) % 60}s`;
+const fmt = s => {
+  const total = Math.max(0, Number(s) || 0);
+  return `${Math.floor(total / 60)}m ${total % 60}s`;
+};
 
 let password = '';
 let results = [];
 
 async function login(){
   password = $('password').value;
+  $('loginError').textContent = '';
   try{
     $('loginBtn').disabled = true;
     await load();
@@ -22,8 +26,14 @@ async function login(){
 }
 
 async function load(){
-  const d = await QuizAPI.call('adminResults', {adminPassword: password});
+  const d = await QuizAPI.call('adminResults', {adminPassword: password}, {
+    timeoutMs: 10000,
+    retries: 4,
+    onRetry: info => $('dashError').textContent = `Server busy — retrying (${info.attempt}/${info.totalAttempts})…`
+  });
+
   results = d.results;
+  $('dashError').textContent = '';
   $('summary').textContent = `${results.length} submitted participant(s)`;
 
   $('resultsBody').innerHTML = results.map(x => `
@@ -47,7 +57,7 @@ function csv(){
   ];
   const text = rows.map(r => r.map(v => `"${String(v ?? '').replace(/"/g,'""')}"`).join(',')).join('\n');
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([text], {type:'text/csv'}));
+  a.href = URL.createObjectURL(new Blob([text], {type:'text/csv;charset=utf-8'}));
   a.download = 'ece-quiz-results.csv';
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
