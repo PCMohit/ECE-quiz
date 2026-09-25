@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://script.google.com" crossorigin>
   <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
   <title>ECE Quiz Competition</title>
-  <link rel="stylesheet" href="css/style.css?v=20260926-ultra1">
+  <link rel="stylesheet" href="css/style.css?v=20260926-ultra3">
 </head>
 <body>
   <header class="top">
@@ -33,6 +33,13 @@
       <p id="regError" class="error" aria-live="polite"></p>
       <p id="serverStatus" class="status muted" aria-live="polite">Quiz ready. Click Start Quiz when instructed by the organizer.</p>
       <button id="startBtn" class="btn primary">Start Quiz</button>
+
+      <div id="recoveryPanel" class="notice" hidden>
+        <strong>Previous attempt detected.</strong> The system is checking its submission status and will automatically finish it when the server is reachable.
+        <div class="actions inline" style="margin-top:.75rem">
+          <button id="retryRecoveryBtn" class="btn">Check / Retry Submission</button>
+        </div>
+      </div>
 
       <div class="notice">
         One attempt is allowed per Participant ID. Your 30-minute timer is controlled by the common organizer start time. Refreshing or leaving the page during the live quiz automatically submits your saved answers.
@@ -75,9 +82,9 @@
     </section>
   </main>
 
-  <script src="config.js?v=20260926-ultra1"></script>
-  <script src="js/api.js?v=20260926-ultra1"></script>
-  <script src="js/public-question-bank.js?v=20260926-ultra1"></script>
-  <script src="js/quiz.js?v=20260926-ultra1"></script>
+  <script src="config.js?v=20260926-ultra3"></script>
+  <script src="js/api.js?v=20260926-ultra3"></script>
+  <script src="js/public-question-bank.js?v=20260926-ultra3"></script>
+  <script src="js/quiz.js?v=20260926-ultra3"></script>
 </body>
 </html>
