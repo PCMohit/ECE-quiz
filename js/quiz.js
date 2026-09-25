@@ -4,13 +4,36 @@ let answers = Object.create(null);
 let attemptToken = null;
 let deadlineMs = 0;
 let timerId = null;
+let submitting = false;
+let loadingQuestionsPromise = null;
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({
   '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;'
 }[c]));
 
-function startQuiz(){
+// Preload the public question set while the participant fills in the registration form.
+// This moves the 50-question payload away from the critical Start Quiz click.
+async function preloadQuestions(){
+  if (questions.length === 50) return questions;
+  if (loadingQuestionsPromise) return loadingQuestionsPromise;
+
+  loadingQuestionsPromise = QuizAPI.call('quizInfo', {}, {timeoutMs:20000})
+    .then(d => {
+      if (!Array.isArray(d.questions) || d.questions.length !== 50) {
+        throw new Error('The server returned an invalid quiz.');
+      }
+      questions = d.questions;
+      return questions;
+    })
+    .finally(() => {
+      loadingQuestionsPromise = null;
+    });
+
+  return loadingQuestionsPromise;
+}
+
+async function startQuiz(){
   const name = $('name').value.trim();
   const participantId = $('roll').value.trim();
   const email = $('email').value.trim();
@@ -23,28 +46,47 @@ function startQuiz(){
   }
 
   $('startBtn').disabled = true;
-  QuizAPI.call('startAttempt', {name, participantId, email, institution})
-    .then(d => {
-      questions = Array.isArray(d.questions) ? d.questions : [];
-      if(questions.length !== 50) throw new Error('The server returned an invalid quiz.');
+  $('startBtn').textContent = 'Starting Quiz...';
 
-      // Answers are stored by QUESTION ID, not by array position.
-      // Unanswered questions simply have no key in this object.
-      answers = Object.create(null);
-      attemptToken = d.attemptToken;
-      deadlineMs = Number(d.deadlineMs);
-      current = 0;
+  try {
+    // Ensure questions are ready. Usually this has already completed in the background.
+    await preloadQuestions();
 
-      $('registration').hidden = true;
-      $('quiz').hidden = false;
-      $('participantLabel').textContent = `${name} • ${participantId}`;
-      render();
-      startTimer();
-    })
-    .catch(e => {
-      $('regError').textContent = e.message;
+    const d = await QuizAPI.call('startAttempt', {
+      name,
+      participantId,
+      email,
+      institution
+    }, {timeoutMs:25000});
+
+    if(d.questions && Array.isArray(d.questions) && d.questions.length === 50){
+      // Keep server-supplied public questions as the authoritative set for this attempt.
+      questions = d.questions;
+    }
+
+    if(questions.length !== 50) {
+      throw new Error('The server returned an invalid quiz.');
+    }
+
+    answers = Object.create(null);
+    attemptToken = d.attemptToken;
+    deadlineMs = Number(d.deadlineMs);
+    current = 0;
+    submitting = false;
+
+    $('registration').hidden = true;
+    $('quiz').hidden = false;
+    $('participantLabel').textContent = `${name} • ${participantId}`;
+    render();
+    startTimer();
+  } catch(e) {
+    $('regError').textContent = e.message;
+  } finally {
+    if(!attemptToken){
       $('startBtn').disabled = false;
-    });
+      $('startBtn').textContent = 'Start Quiz';
+    }
+  }
 }
 
 function render(){
@@ -58,17 +100,17 @@ function render(){
     <div class="card">
       <span class="eyebrow">Q${current + 1}</span>
       <h2>${esc(q.question)}</h2>
-      ${q.options.map((o, i) => `
-        <label class="option">
-          <input type="radio" name="answer" value="${String.fromCharCode(65 + i)}" ${answers[qid] === String.fromCharCode(65 + i) ? 'checked' : ''}>
+      ${q.options.map((o, i) => {
+        const letter = String.fromCharCode(65 + i);
+        return `<label class="option">
+          <input type="radio" name="answer" value="${letter}" ${answers[qid] === letter ? 'checked' : ''}>
           <span>${esc(o)}</span>
-        </label>
-      `).join('')}
+        </label>`;
+      }).join('')}
     </div>`;
 
   document.querySelectorAll('input[name="answer"]').forEach(input => {
     input.onchange = () => {
-      // Only an explicit radio selection creates an answer entry.
       answers[qid] = input.value;
     };
   });
@@ -79,6 +121,7 @@ function render(){
 }
 
 function startTimer(){
+  clearInterval(timerId);
   updateTimer();
   timerId = setInterval(updateTimer, 250);
 }
@@ -93,18 +136,19 @@ function updateTimer(){
 }
 
 async function submitQuiz(auto = false){
-  if(!attemptToken) return;
+  if(!attemptToken || submitting) return;
 
+  submitting = true;
   clearInterval(timerId);
   $('submitBtn').disabled = true;
+  $('submitBtn').textContent = 'Submitting...';
 
   try{
-    // Send only explicitly answered question IDs.
-    // There is NO null-filled 50-element answer array.
+    // Only explicitly answered question IDs are sent.
     await QuizAPI.call('submitAttempt', {
       attemptToken,
       answers: Object.assign({}, answers)
-    });
+    }, {timeoutMs:25000});
 
     $('quiz').hidden = true;
     $('result').hidden = false;
@@ -112,7 +156,9 @@ async function submitQuiz(auto = false){
     attemptToken = null;
   }catch(e){
     alert(e.message);
+    submitting = false;
     $('submitBtn').disabled = false;
+    $('submitBtn').textContent = 'Submit Quiz';
   }
 }
 
@@ -125,6 +171,9 @@ $('startBtn').onclick = startQuiz;
 $('prevBtn').onclick = () => { if(current){ current--; render(); } };
 $('nextBtn').onclick = () => { if(current < questions.length - 1){ current++; render(); } };
 $('submitBtn').onclick = () => submitQuiz(false);
+
+// Start loading question data immediately, without blocking registration.
+preloadQuestions().catch(() => {});
 
 window.addEventListener('beforeunload', e => {
   if(attemptToken){

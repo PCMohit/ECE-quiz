@@ -1,73 +1,45 @@
-ECE QUIZ — ACCURATE MARKING VERSION
-====================================
+ECE QUIZ — PERFORMANCE + ACCURATE SCORING VERSION
+====================================================
 
-This package fixes the scoring architecture, not just the symptom.
+This version keeps the same Google Apps Script /exec URL from config.js.
 
-KEY SCORING RULE
+PERFORMANCE FIXES
 -----------------
-The participant browser does NOT send a 50-element array containing nulls.
-It sends an object containing ONLY explicitly answered question IDs.
+- Question bank is cached in Apps Script CacheService for fast repeated starts/submissions.
+- The participant page preloads the public (no-answer-key) 50-question set while the registration form is open.
+- Start Quiz keeps the 50-question payload off the critical click path when the preload has completed.
+- The Apps Script lock is now held only around the small write-critical section instead of around question loading.
+- Start checks only the Participant ID column instead of reading the entire Attempts sheet.
+- Submit locates the token using only the Token Hash column, then reads one attempt row.
+- Double submission is still prevented with a short lock around the final status check + result write.
+- Frontend requests have a 25-second timeout with a clear error message instead of hanging indefinitely.
+- Buttons show Starting Quiz... / Submitting... and prevent duplicate clicks.
 
-Example:
-{
-  "1": "B",
-  "2": "A"
-}
-
-Questions 3–50 are absent => unanswered => 0 marks.
-
-The server checks every submitted question ID against the private Questions sheet.
-Only A/B/C/D are valid answers. Missing question IDs are never converted to A.
-The server also enforces score <= answered count.
-
-IMPORTANT BACKEND STEPS
------------------------
-1. Open your Google Sheet → Extensions → Apps Script.
-2. Replace Code.gs with:
-   private-backend/apps-script/Code.gs
-3. Save.
-4. In the Google Sheet, reload the sheet.
-5. Run: ECE Quiz Setup → 1. Create/repair sheets
-6. Run: ECE Quiz Setup → 3. Import questions JSON
-   Enter the exact Drive filename: questions.json
-7. Verify Questions → Correct Answer now contains A/B/C/D.
-8. Deploy → Manage deployments → edit your existing Web App → deploy a new version.
-9. Keep Execute as: Me and keep the same participant access setting.
-10. The existing /exec URL in github-pages/config.js is preserved.
-
-FRONTEND / GITHUB PAGES
------------------------
-Upload ONLY the contents of github-pages/ to GitHub Pages.
-Do NOT upload private-backend/questions.json.
-Do NOT upload Code.gs to the public GitHub Pages site.
-
-PUBLIC PARTICIPANT RESULT
--------------------------
-After submission, participants see only a submission confirmation.
-They do not receive score, correct answers, or answer review.
-
-LIVE RANKING
+SCORING RULE
 ------------
-The public Live Ranking page has been removed.
-The organizer dashboard remains password protected.
+Only explicitly answered question IDs are sent. A missing question ID means unanswered = 0 marks.
+The server accepts only A/B/C/D (plus temporary numeric 0/1/2/3 compatibility for old cached frontend files).
+The server enforces score <= answered count.
 
-AUDIT INFORMATION
-------------------
-The organizer dashboard also shows Answered count (for example 2/50).
-The private Results sheet stores this value in the Answered Count column.
-This makes testing the marking behavior straightforward.
+DEPLOYMENT
+----------
+1. Replace Google Apps Script Code.gs with private-backend/apps-script/Code.gs.
+2. Save.
+3. Google Sheet menu: ECE Quiz Setup -> 1. Create/repair sheets.
+4. If questions are already correct, no import is necessary. If needed: ECE Quiz Setup -> 3. Import questions JSON -> questions.json.
+5. Deploy -> Manage deployments -> edit the existing web app -> Deploy a new version.
+6. Keep Execute as: Me and your current participant access setting.
+7. Do not change the /exec URL in github-pages/config.js.
+8. Upload ONLY the contents of github-pages/ to GitHub Pages.
+9. Do not upload private-backend/questions.json or Code.gs to GitHub.
 
-MANDATORY TEST BEFORE THE EVENT
--------------------------------
-Use a fresh Participant ID.
-A. Answer 0 questions → Score must be 0, Answered must be 0/50.
-B. Answer exactly 1 question correctly → Score must be 1, Answered 1/50.
-C. Answer exactly 1 question incorrectly → Score must be 0, Answered 1/50.
-D. Answer exactly 2 questions → Score can only be 0, 1, or 2; never 27, 25, etc.
-E. Answer exactly 5 questions → Score can only be 0 through 5.
+MANDATORY LOAD TEST
+-------------------
+Use fresh Participant IDs. Test several starts close together.
+Then test submissions from several browser tabs/devices.
+A participant answering N questions can receive only 0..N marks.
 
 OLD TEST DATA
 -------------
-Previous incorrect test submissions remain historical rows in Results.
-Delete old test rows before the real competition so the organizer dashboard starts clean.
-Use fresh Participant IDs for every test because Attempts intentionally blocks reused IDs.
+Historical incorrect rows in Results remain. Clear/delete test rows before the event.
+Attempts intentionally blocks a reused Participant ID.
