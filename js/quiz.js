@@ -153,12 +153,12 @@ function startQuiz(){
     institution,
     startRequestId
   }, {
-    timeoutMs: 10000,
-    retries: 4,
-    retryDelaysMs: [1500, 3000, 6000, 10000],
-    onRetry: () => {
-      $('startBtn').textContent = 'Retrying…';
-      setStatus('Server is busy — retrying automatically…', 'warning');
+    timeoutMs: 15000,
+    retries: 3,
+    retryDelaysMs: [900, 1800, 3500],
+    onRetry: info => {
+      $('startBtn').textContent = 'Connecting…';
+      setStatus(`Connecting to quiz server… (${info.attempt}/${info.totalAttempts})`, 'warning');
     }
   }).then(d => {
     if (!d.attemptToken || !Number.isFinite(Number(d.startAtMs)) || !Number.isFinite(Number(d.deadlineMs)) || !Number.isFinite(Number(d.serverNowMs))) {
@@ -269,12 +269,12 @@ async function submitQuiz(auto = false){
       autoSubmit: auto,
       autoReason: auto ? 'timer' : 'manual'
     }, {
-      timeoutMs: 10000,
-      retries: 6,
-      retryDelaysMs: [1000, 2000, 4000, 8000, 12000, 15000],
-      onRetry: () => {
-        $('submitBtn').textContent = 'Retrying submission…';
-        setStatus('Server is busy or the network is unstable — retrying automatically…', 'warning');
+      timeoutMs: 15000,
+      retries: 4,
+      retryDelaysMs: [800, 1500, 3000, 5000],
+      onRetry: info => {
+        $('submitBtn').textContent = 'Saving…';
+        setStatus(`Saving your submission… (${info.attempt}/${info.totalAttempts})`, 'warning');
       }
     });
 
@@ -400,10 +400,10 @@ async function recoverSubmitLoop(){
       autoSubmit: true,
       autoReason: 'page_recovery'
     }, {
-      timeoutMs: 10000,
-      retries: 5,
-      retryDelaysMs: [1000, 2000, 4000, 8000, 12000],
-      onRetry: () => setStatus('Previous session is being auto-submitted. Retrying…', 'warning')
+      timeoutMs: 15000,
+      retries: 4,
+      retryDelaysMs: [800, 1500, 3000, 5000],
+      onRetry: info => setStatus(`Previous session is being auto-submitted… (${info.attempt}/${info.totalAttempts})`, 'warning')
     });
 
     recoveryInProgress = false;

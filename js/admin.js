@@ -29,10 +29,10 @@ async function login(){
 
 async function load(){
   const d = await QuizAPI.call('adminResults', {adminPassword: password}, {
-    timeoutMs: 10000,
-    retries: 4,
-    retryDelaysMs: [1000, 2000, 4000, 8000],
-    onRetry: info => $('dashError').textContent = `Server busy — retrying (${info.attempt}/${info.totalAttempts})…`
+    timeoutMs: 15000,
+    retries: 2,
+    retryDelaysMs: [800, 1800],
+    onRetry: info => $('dashError').textContent = `Connecting to organizer database… (${info.attempt}/${info.totalAttempts})`
   });
 
   results = d.results || [];
@@ -92,7 +92,7 @@ async function setStartTime(){
     const d = await QuizAPI.call('setQuizStart', {
       adminPassword: password,
       startAtMs: selectedStartMs()
-    }, {timeoutMs:10000, retries:3});
+    }, {timeoutMs:15000, retries:2, retryDelaysMs:[800,1800]});
     control = d.control;
     updateControlUI();
     $('controlStatus').textContent = 'Quiz start time saved successfully.';
@@ -109,7 +109,7 @@ async function startNow(){
   $('controlStatus').textContent = '';
   try{
     $('startNowBtn').disabled = true;
-    const d = await QuizAPI.call('startQuizNow', {adminPassword: password}, {timeoutMs:10000, retries:3});
+    const d = await QuizAPI.call('startQuizNow', {adminPassword: password}, {timeoutMs:15000, retries:2, retryDelaysMs:[800,1800]});
     control = d.control;
     updateControlUI();
     $('controlStatus').textContent = 'Quiz will start for everyone in 10 seconds.';
@@ -127,7 +127,7 @@ async function clearSchedule(){
   $('controlStatus').textContent = '';
   try{
     $('clearStartBtn').disabled = true;
-    const d = await QuizAPI.call('clearQuizStart', {adminPassword: password}, {timeoutMs:10000, retries:3});
+    const d = await QuizAPI.call('clearQuizStart', {adminPassword: password}, {timeoutMs:15000, retries:2, retryDelaysMs:[800,1800]});
     control = d.control;
     $('startDateTime').value = '';
     updateControlUI();

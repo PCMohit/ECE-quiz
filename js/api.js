@@ -5,7 +5,7 @@ window.QuizAPI = {
       throw new Error('Apps Script URL is not configured yet.');
     }
 
-    const timeoutMs = Math.max(4000, Number(options.timeoutMs || 10000));
+    const timeoutMs = Math.max(5000, Number(options.timeoutMs || 15000));
     const retries = Math.max(0, Number(options.retries ?? 4));
     const retryDelaysMs = Array.isArray(options.retryDelaysMs) ? options.retryDelaysMs : [];
     const onRetry = typeof options.onRetry === 'function' ? options.onRetry : () => {};
