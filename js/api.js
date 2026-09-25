@@ -7,6 +7,7 @@ window.QuizAPI = {
 
     const timeoutMs = Number(options.timeoutMs || 10000);
     const retries = Number(options.retries ?? 5);
+    const retryDelaysMs = Array.isArray(options.retryDelaysMs) ? options.retryDelaysMs : null;
     const onRetry = typeof options.onRetry === 'function' ? options.onRetry : () => {};
 
     let lastError = null;
@@ -67,9 +68,11 @@ window.QuizAPI = {
           throw lastError;
         }
 
-        const base = Math.min(7000, 500 * Math.pow(2, attempt));
-        const jitter = Math.floor(Math.random() * 600);
-        const delay = base + jitter;
+        const base = retryDelaysMs && retryDelaysMs[attempt] != null
+          ? Number(retryDelaysMs[attempt])
+          : Math.min(4000, 350 * Math.pow(2, attempt));
+        const jitter = Math.floor(Math.random() * Math.min(300, Math.max(50, base * 0.2)));
+        const delay = Math.max(100, base + jitter);
 
         onRetry({
           attempt: attempt + 1,
