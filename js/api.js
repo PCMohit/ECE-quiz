@@ -5,9 +5,9 @@ window.QuizAPI = {
       throw new Error('Apps Script URL is not configured yet.');
     }
 
-    const timeoutMs = Number(options.timeoutMs || 10000);
-    const retries = Number(options.retries ?? 5);
-    const retryDelaysMs = Array.isArray(options.retryDelaysMs) ? options.retryDelaysMs : null;
+    const timeoutMs = Math.max(4000, Number(options.timeoutMs || 10000));
+    const retries = Math.max(0, Number(options.retries ?? 4));
+    const retryDelaysMs = Array.isArray(options.retryDelaysMs) ? options.retryDelaysMs : [];
     const onRetry = typeof options.onRetry === 'function' ? options.onRetry : () => {};
 
     let lastError = null;
@@ -29,50 +29,55 @@ window.QuizAPI = {
               'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
             },
             body,
-            signal: controller.signal,
-            cache: 'no-store'
+            redirect: 'follow',
+            cache: 'no-store',
+            signal: controller.signal
           });
         } finally {
           clearTimeout(timeoutId);
         }
 
         const text = await response.text();
-        let data = null;
-
+        let data;
         try {
           data = JSON.parse(text);
         } catch (_) {
-          // Apps Script can return an HTML error page during a burst. Treat that as retryable.
           throw Object.assign(new Error('Temporary quiz server response.'), { retryable: true });
         }
 
-        if (!response.ok) {
-          throw Object.assign(
-            new Error(data && data.error ? data.error : `Quiz server error (${response.status}).`),
-            { retryable: data && data.retryable !== false }
-          );
+        // Apps Script normally returns HTTP 200 even when our doPost reports an application error.
+        if (!response.ok && response.status < 500 && response.status !== 429) {
+          const err = new Error(data && data.error ? data.error : `Quiz server error (${response.status}).`);
+          err.retryable = false;
+          throw err;
         }
 
         if (!data.ok) {
           const err = new Error(data.error || 'Quiz server request failed.');
-          err.retryable = data.retryable === true;
+          err.retryable = data.retryable === true || response.status >= 500 || response.status === 429;
+          err.code = data.code || '';
           throw err;
         }
 
         return data;
       } catch (e) {
         lastError = normalizeNetworkError_(e);
-        const retryable = lastError.retryable === true || e.name === 'AbortError' || e instanceof TypeError;
+        const retryable =
+          lastError.retryable === true ||
+          e.name === 'AbortError' ||
+          e instanceof TypeError;
 
         if (!retryable || attempt >= retries) {
           throw lastError;
         }
 
-        const base = retryDelaysMs && retryDelaysMs[attempt] != null
-          ? Number(retryDelaysMs[attempt])
-          : Math.min(4000, 350 * Math.pow(2, attempt));
-        const jitter = Math.floor(Math.random() * Math.min(300, Math.max(50, base * 0.2)));
-        const delay = Math.max(100, base + jitter);
+        const base = retryDelaysMs[attempt] != null
+          ? Math.max(500, Number(retryDelaysMs[attempt]))
+          : Math.min(12000, 1000 * Math.pow(2, attempt));
+
+        // Small jitter prevents a synchronized retry storm when many participants receive the same error.
+        const jitter = Math.floor(Math.random() * Math.min(750, Math.max(100, base * 0.25)));
+        const delay = base + jitter;
 
         onRetry({
           attempt: attempt + 1,
@@ -94,11 +99,11 @@ function sleep_(ms) {
 }
 
 function normalizeNetworkError_(e) {
-  if (!e) return new Error('Quiz server request failed.');
+  if (!e) return Object.assign(new Error('Quiz server request failed.'), { retryable: true });
 
   if (e.name === 'AbortError') {
     return Object.assign(
-      new Error('The quiz server is busy or taking too long to respond.'),
+      new Error('The quiz server is taking longer than expected.'),
       { retryable: true }
     );
   }

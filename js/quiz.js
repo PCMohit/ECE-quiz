@@ -7,6 +7,7 @@ let timerId = null;
 let submitting = false;
 let startRequestId = null;
 let submissionRequestId = null;
+let startedSuccessfully = false;
 
 const QUESTION_COUNT = 50;
 const $ = id => document.getElementById(id);
@@ -39,7 +40,7 @@ function startQuiz(){
     $('regError').textContent = 'Name, Participant ID, and Email are required.';
     return;
   }
-  if (!questions || questions.length !== QUESTION_COUNT) {
+  if (!questions || questions.length !== QUESTION_COUNT || !questions.every((q, i) => Number(q.id) === i + 1 && Array.isArray(q.options) && q.options.length === 4)) {
     $('regError').textContent = 'The quiz question bank could not be loaded. Please refresh the page.';
     return;
   }
@@ -60,9 +61,9 @@ function startQuiz(){
     institution,
     startRequestId
   }, {
-    timeoutMs: 5000,
-    retries: 6,
-    retryDelaysMs: [350, 700, 1200, 1800, 2500, 3000],
+    timeoutMs: 10000,
+    retries: 4,
+    retryDelaysMs: [2000, 4000, 8000, 12000],
     onRetry: () => {
       $('startBtn').textContent = 'Retrying…';
       setStatus('Server is busy — retrying automatically…', 'warning');
@@ -73,6 +74,7 @@ function startQuiz(){
     }
 
     attemptToken = d.attemptToken;
+    startedSuccessfully = true;
     deadlineMs = Number(d.deadlineMs);
     answers = Object.create(null);
     submissionRequestId = null;
@@ -87,6 +89,7 @@ function startQuiz(){
   }).catch(e => {
     $('regError').textContent = e.message;
     startRequestId = null;
+    startedSuccessfully = false;
     setStatus(e.message, 'error');
     $('startBtn').disabled = false;
     $('startBtn').textContent = 'Start Quiz';
@@ -139,7 +142,7 @@ function updateTimer(){
 }
 
 async function submitQuiz(auto = false){
-  if(!attemptToken || submitting) return;
+  if(!attemptToken || submitting || !startedSuccessfully) return;
 
   submitting = true;
   clearInterval(timerId);
@@ -154,9 +157,9 @@ async function submitQuiz(auto = false){
       submissionRequestId,
       answers: Object.assign({}, answers)
     }, {
-      timeoutMs: 5000,
-      retries: 8,
-      retryDelaysMs: [300, 600, 1000, 1600, 2200, 2800, 3000, 3000],
+      timeoutMs: 10000,
+      retries: 4,
+      retryDelaysMs: [2000, 4000, 8000, 12000],
       onRetry: () => {
         $('submitBtn').textContent = 'Retrying submission…';
         setStatus('Server is busy — retrying your submission automatically…', 'warning');
@@ -169,6 +172,7 @@ async function submitQuiz(auto = false){
     attemptToken = null;
     startRequestId = null;
     submissionRequestId = null;
+    startedSuccessfully = false;
     setStatus('', 'muted');
   }catch(e){
     submitting = false;
