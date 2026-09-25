@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>ECE Quiz Competition</title>
-  <link rel="stylesheet" href="css/style.css?v=20260925-r3">
+  <link rel="stylesheet" href="css/style.css?v=20260926-sync1">
 </head>
 <body>
   <header class="top">
@@ -19,22 +19,31 @@
     <section id="registration" class="card hero">
       <span class="eyebrow">50 MCQs • 30 Minutes</span>
       <h1>Electronics Quiz Competition</h1>
-      <p>Enter your details and complete the quiz. Your answers are evaluated securely by the quiz server.</p>
+      <p>Enter your details and click Start Quiz. Your attempt will be registered first; the quiz itself starts at the common organizer time.</p>
 
       <div class="grid2">
-        <label>Name<input id="name" maxlength="80" placeholder="Your full name" autocomplete="name"></label>
-        <label>Participant ID / Roll No.<input id="roll" maxlength="40" placeholder="e.g. ECE2026-001" autocomplete="off"></label>
+        <label>Name<input id="name" maxlength="80" placeholder="Your full name" autocomplete="name" required></label>
+        <label>Participant ID / Roll No.<input id="roll" maxlength="40" placeholder="e.g. ECE2026-001" autocomplete="off" required></label>
         <label>Email<input id="email" type="email" maxlength="120" autocomplete="email" required></label>
         <label>Institution (optional)<input id="institution" maxlength="120" autocomplete="organization"></label>
       </div>
 
       <p id="regError" class="error" aria-live="polite"></p>
-      <p id="serverStatus" class="status muted" aria-live="polite">Connecting to quiz server…</p>
+      <p id="serverStatus" class="status muted" aria-live="polite">Quiz ready. Click Start Quiz when instructed by the organizer.</p>
       <button id="startBtn" class="btn primary">Start Quiz</button>
 
       <div class="notice">
-        One attempt is allowed per Participant ID. Do not refresh or close the browser after starting.
+        One attempt is allowed per Participant ID. Your 30-minute timer is controlled by the common organizer start time.
       </div>
+    </section>
+
+    <section id="waiting" class="card result" hidden>
+      <span class="eyebrow">Ready to begin</span>
+      <h2>Waiting for the common quiz start</h2>
+      <div class="score" id="startCountdown">00:10</div>
+      <p>All participants registered for this session use the same server-defined start time and the same final deadline.</p>
+      <p id="deadlineLabel" class="muted"></p>
+      <p id="waitingNote" class="muted">Please keep this page open.</p>
     </section>
 
     <section id="quiz" hidden>
@@ -64,9 +73,9 @@
     </section>
   </main>
 
-  <script src="config.js?v=20260925-r3"></script>
-  <script src="js/api.js?v=20260925-r3"></script>
-  <script src="js/public-question-bank.js?v=20260925-r3"></script>
-  <script src="js/quiz.js?v=20260925-r3"></script>
+  <script src="config.js?v=20260926-sync1"></script>
+  <script src="js/api.js?v=20260926-sync1"></script>
+  <script src="js/public-question-bank.js?v=20260926-sync1"></script>
+  <script src="js/quiz.js?v=20260926-sync1"></script>
 </body>
 </html>

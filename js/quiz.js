@@ -2,8 +2,11 @@ let questions = Array.isArray(window.ECE_PUBLIC_QUESTIONS) ? window.ECE_PUBLIC_Q
 let current = 0;
 let answers = Object.create(null);
 let attemptToken = null;
+let startAtMs = 0;
 let deadlineMs = 0;
+let serverOffsetMs = 0;
 let timerId = null;
+let waitingTimerId = null;
 let submitting = false;
 let startRequestId = null;
 let submissionRequestId = null;
@@ -29,6 +32,40 @@ function setStatus(message, type = 'muted'){
   el.className = `status ${type}`;
 }
 
+function getServerNowMs(){
+  return Date.now() + serverOffsetMs;
+}
+
+function showWaiting(){
+  clearInterval(waitingTimerId);
+  if ($('waiting')) $('waiting').hidden = false;
+  if ($('quiz')) $('quiz').hidden = true;
+  if ($('registration')) $('registration').hidden = true;
+  updateWaiting();
+  waitingTimerId = setInterval(updateWaiting, 250);
+}
+
+function updateWaiting(){
+  const left = Math.max(0, startAtMs - getServerNowMs());
+  if ($('startCountdown')) $('startCountdown').textContent = fmtMs(left);
+  if ($('deadlineLabel')) $('deadlineLabel').textContent = `Quiz deadline: ${new Date(deadlineMs).toLocaleString()}`;
+  if (left <= 0){
+    clearInterval(waitingTimerId);
+    $('waiting').hidden = true;
+    beginQuizNow();
+  }
+}
+
+function beginQuizNow(){
+  $('registration').hidden = true;
+  $('waiting').hidden = true;
+  $('quiz').hidden = false;
+  $('participantLabel').textContent = $('participantLabel').textContent || '';
+  render();
+  startTimer();
+  setStatus('Quiz started. All participants share the same server deadline.', 'success');
+}
+
 function startQuiz(){
   const name = $('name').value.trim();
   const participantId = $('roll').value.trim();
@@ -50,8 +87,8 @@ function startQuiz(){
   }
 
   $('startBtn').disabled = true;
-  $('startBtn').textContent = 'Starting…';
-  setStatus('Starting your quiz…', 'muted');
+  $('startBtn').textContent = 'Joining…';
+  setStatus('Registering your attempt…', 'muted');
   startRequestId = makeRequestId('start');
 
   QuizAPI.call('startAttempt', {
@@ -63,29 +100,33 @@ function startQuiz(){
   }, {
     timeoutMs: 10000,
     retries: 4,
-    retryDelaysMs: [2000, 4000, 8000, 12000],
+    retryDelaysMs: [1500, 3000, 6000, 10000],
     onRetry: () => {
       $('startBtn').textContent = 'Retrying…';
       setStatus('Server is busy — retrying automatically…', 'warning');
     }
   }).then(d => {
-    if (!d.attemptToken || !Number.isFinite(Number(d.deadlineMs))) {
-      throw new Error('The quiz server returned an invalid attempt.');
+    if (!d.attemptToken || !Number.isFinite(Number(d.startAtMs)) || !Number.isFinite(Number(d.deadlineMs)) || !Number.isFinite(Number(d.serverNowMs))) {
+      throw new Error('The quiz server returned an invalid synchronized start response.');
     }
 
     attemptToken = d.attemptToken;
     startedSuccessfully = true;
+    startAtMs = Number(d.startAtMs);
     deadlineMs = Number(d.deadlineMs);
+    serverOffsetMs = Number(d.serverNowMs) - Date.now();
     answers = Object.create(null);
     submissionRequestId = null;
     current = 0;
     submitting = false;
 
-    $('registration').hidden = true;
-    $('quiz').hidden = false;
     $('participantLabel').textContent = `${name} • ${participantId}`;
-    render();
-    startTimer();
+    if (typeof d.startAtMs === 'number' && d.startAtMs > d.serverNowMs) {
+      setStatus('Registered. Waiting for the common organizer start time…', 'success');
+      showWaiting();
+    } else {
+      beginQuizNow();
+    }
   }).catch(e => {
     $('regError').textContent = e.message;
     startRequestId = null;
@@ -128,11 +169,11 @@ function render(){
 function startTimer(){
   clearInterval(timerId);
   updateTimer();
-  timerId = setInterval(updateTimer, 500);
+  timerId = setInterval(updateTimer, 250);
 }
 
 function updateTimer(){
-  const left = Math.max(0, deadlineMs - Date.now());
+  const left = Math.max(0, deadlineMs - getServerNowMs());
   $('timer').textContent = fmtMs(left);
 
   if(left <= 0){
@@ -158,8 +199,8 @@ async function submitQuiz(auto = false){
       answers: Object.assign({}, answers)
     }, {
       timeoutMs: 10000,
-      retries: 4,
-      retryDelaysMs: [2000, 4000, 8000, 12000],
+      retries: 5,
+      retryDelaysMs: [1000, 2000, 4000, 8000, 12000],
       onRetry: () => {
         $('submitBtn').textContent = 'Retrying submission…';
         setStatus('Server is busy — retrying your submission automatically…', 'warning');
@@ -167,6 +208,7 @@ async function submitQuiz(auto = false){
     });
 
     $('quiz').hidden = true;
+    $('waiting').hidden = true;
     $('result').hidden = false;
     if(auto) $('result').querySelector('h2').textContent = 'Time expired — quiz submitted';
     attemptToken = null;
@@ -198,7 +240,7 @@ $('submitBtn').onclick = () => submitQuiz(false);
 if (!questions.length) {
   setStatus('Question bank could not be loaded. Please refresh the page.', 'error');
 } else {
-  setStatus('Quiz ready.', 'success');
+  setStatus('Quiz ready. Click Start Quiz when instructed by the organizer.', 'success');
 }
 
 window.addEventListener('beforeunload', e => {
